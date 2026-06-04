@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Building a Tiny SSG</title>
+
+        <style>
+            body {
+                font:
+                    19px/1.7 Georgia,
+                    serif;
+                background-color: ghostwhite;
+            }
+            pre {
+                border: 1px solid #ddd;
+                box-shadow: 5px 5px;
+                padding: 1em;
+                overflow-x: auto;
+            }
+            section {
+                max-width: 750px;
+                min-height: 900px;
+                padding: 40px 100px;
+                margin: 0 auto;
+                background-color: ghostwhite;
+                box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5);
+            }
+            header {
+                margin-bottom: 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+            }
+            nav a {
+                margin-right: 12px;
+            }
+
+            h1,
+            h2,
+            h3 {
+                line-height: 1.3;
+                margin: 2rem 0 1rem;
+            }
+
+            p {
+                margin: 1rem 0;
+            }
+
+            .posts {
+                list-style: none;
+                padding: 0;
+            }
+
+            .posts li {
+                display: flex;
+                align-items: baseline;
+                gap: 12px;
+                margin: 0.5rem 0;
+                padding: 2px 0;
+            }
+
+            .date {
+                color: #666666;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                min-width: 110px;
+            }
+            .alltags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                list-style: none;
+                padding: 0;
+                margin: 10px 0;
+            }
+            .alltags a {
+                display: inline-block;
+                text-decoration: none;
+                padding: 4px;
+                /*border: 1px solid #ccc;*/
+                background-color: #f0f0f0;
+                /*border-radius: 10px;*/
+                font-size: 14px;
+            }
+
+            @media (max-width: 640px) {
+                section {
+                    padding: 24px 20px;
+                }
+
+                .posts li {
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .date {
+                    min-width: auto;
+                    font-size: 0.8rem;
+                }
+
+                nav {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+
+                nav h2 {
+                    width: 100%;
+                    margin-bottom: 6px;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <section class="container wrap">
+            <header>
+                <div class="nav">
+                    <nav>
+                        <h2>Mukul Makwana</h2>
+                        <a href="/">Home</a>
+                        <a href="/blog/">Blog</a>
+
+                        <a href="/about">About</a>
+                    </nav>
+                </div>
+            </header>
+
+            <div class="main">
+                <main><article>
+  <h1>Building a Tiny SSG</h1>
+
+  <p>
+    <em>4 June 2026</em>
+  </p>
+
+  <div><p>i was reading this article on <a href="https://aosabook.org/en/500L/a-template-engine.html">aosabook</a> on building a template engine. i had used jinja and django templates before without really understanding what was happening under the hood.
+so i thought let's build a tiny static site generator to build a mental model of static site generation.</p>
+<p>we need two main things to get started:</p>
+<ul>
+<li>a template engine to render templates</li>
+<li>a markdown parser to convert markdown files to html</li>
+</ul>
+<h1>template engine</h1>
+<p>the naive assumption is that a template engine just does string replacement like find {{ user_name }} and replaces it with the actual value from the context. but what about if statements and loops? you cant do regex for control flow.
+the actual insight from the article was one way to make a template engine work is to compile the template string to a python function then execute it with the context.</p>
+<p>this is a template</p>
+<pre><code class="language-python">&lt;p&gt;Welcome, {{user_name}}!&lt;/p&gt;
+&lt;p&gt;Products:&lt;/p&gt;
+&lt;ul&gt;
+{% if product_list %}
+    {% for product in product_list %}
+        &lt;li&gt;{{ product.name }}:
+        {{ product.price|format_price }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</code></pre>
+<p>gets compiled into a function like this</p>
+<pre><code class="language-python">def render_template(context):
+    result = []
+    result.append(&quot;&lt;p&gt;Welcome, &quot;)
+    result.append(str(context[&quot;user_name&quot;]))
+    result.append(&quot;!&lt;/p&gt; &quot;)
+    result.append(&quot;&lt;p&gt;Products:&lt;/p&gt; &quot;)
+    result.append(&quot;&lt;ul&gt; &quot;)
+    if context[&quot;product_list&quot;]:
+        for product in context[&quot;product_list&quot;]:
+            result.append(&quot;&lt;li&gt;&quot;)
+            result.append(str(product[&quot;name&quot;]))
+            result.append(&quot;&lt;/li&gt; &quot;)
+    result.append(&quot;&lt;/ul&gt;&quot;)
+    return &quot;&quot;.join(result)
+</code></pre>
+<p>then using exec() we can execute the function string with the context data as arguments.</p>
+<pre><code class="language-python">exec(compiled_template_string)
+render_func = safe_namespace[&quot;render_template&quot;]
+render_func(context)
+</code></pre>
+<p>the pipeline is: <code> template string → generate that function as a code string → exec() it into existence → call it with your context data.</code></p>
+<h1>markdown parser</h1>
+<pre><code>raw markdown
+→ block_tokenizer() → [ HEADING, TEXT_LINE, LIST_ITEM, ...]
+→ block_parser() → [ Heading{}, Paragraph{}, List{}, ...]
+→ attach_inline() → inline parse each node's raw_text
+→ render_all() → html string
+</code></pre>
+<p><strong>1. block tokenizer</strong> — splits raw text line by line and classifies each line into a token type: <code>HEADING</code>, <code>LIST_ITEM</code>, <code>TEXT_LINE</code>, or <code>BLANK</code>.</p>
+<p><strong>2. block parser</strong> — walks the token list and builds an AST of block-level nodes
+like <code>Heading</code>, <code>Paragraph</code>, and <code>List</code>. the only stateful part here is list
+handling — consecutive <code>LIST_ITEM</code> tokens need to be grouped under a single <code>List</code> node, so there's a <code>current_list</code> buffer that gets flushed whenever a non-list token appears.</p>
+<p><strong>3. inline parser</strong> — runs on the <code>raw_text</code> of each block node and handles
+<code>**bold**</code>, <code>*italic*</code>, <code>`code`</code>, <code>[links](url)</code>, and <code>![images](src)</code>. this
+one uses a small stack to handle nesting — when you hit <code>**</code> you push a new <code>Bold</code>
+node onto the stack, collect children until you hit the closing <code>**</code>, then pop it
+and attach it to the parent.</p>
+<p>after writing it i realized there are lots of edge cases to handle, so i moved to an established markdown parser for the actual blog.</p>
+<p>so i started with a simple Python script that reads markdown files and parse them to html then renders them using a custom template engine.</p>
+<p>then added some ssg like thing which loops through directories and renders markdown files and create html files in the output directory in certain subdirectories so you can serve the static files over http.just like any other static site generator output.</p>
+<p>there are plenty of gaps to fill and edge cases to handle but the goal was never completeness. it was to understand the problem and how under the hood it can work.</p>
+<p>source is at <a href="https://github.com/mukul0x9/baresg">mukul0x9/baresg</a></p>
+</div>
+
+    <div class="tags">
+     
+    <a href="/tags/recreational-programming">#recreational-programming</a>
+     
+  </div>
+</article>
+</main>
+            </div>
+        </section>
+    </body>
+</html>
