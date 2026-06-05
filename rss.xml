@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Mukul Blog</title>
+<link>https://mukul0x9.pages.dev</link>
+<description>Technical blog</description>
+<item>
+<title>Building a Tiny SSG</title>
+<link>https://mukul0x9.pages.dev/blog/tiny-ssg/</link>
+<guid>https://mukul0x9.pages.dev/blog/tiny-ssg/</guid>
+<pubDate>Thu, 04 Jun 2026 00:00:00 GMT</pubDate>
+</item>
+<item>
+<title>Hello World</title>
+<link>https://mukul0x9.pages.dev/blog/hello-world/</link>
+<guid>https://mukul0x9.pages.dev/blog/hello-world/</guid>
+<pubDate>Wed, 15 Apr 2026 00:00:00 GMT</pubDate>
+</item>
+</channel>
+</rss>
