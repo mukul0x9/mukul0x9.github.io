@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link
+            rel="alternate"
+            type="application/rss+xml"
+            title="RSS Feed"
+            href="/rss.xml"
+        />
+        <link rel="canonical" href="https://mukul0x9.pages.dev/blog/memdb/" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>I Thought Redis Was Just a HashMap</title>
+
+        <style>
+            body {
+                font:
+                    19px/1.7 Georgia,
+                    serif;
+                background-color: ghostwhite;
+            }
+            pre {
+                border: 1px solid #ddd;
+                box-shadow: 5px 5px;
+                padding: 1em;
+                overflow-x: auto;
+            }
+            section {
+                max-width: 750px;
+                min-height: 900px;
+                padding: 40px 100px;
+                margin: 0 auto;
+                background-color: ghostwhite;
+                box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5);
+            }
+            header {
+                margin-bottom: 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+            }
+            nav a {
+                margin-right: 12px;
+            }
+
+            h1,
+            h2,
+            h3 {
+                line-height: 1.3;
+                margin: 2rem 0 1rem;
+            }
+
+            p {
+                margin: 1rem 0;
+            }
+
+            .posts {
+                list-style: none;
+                padding: 0;
+            }
+
+            .posts li {
+                display: flex;
+                align-items: baseline;
+                gap: 12px;
+                margin: 0.5rem 0;
+                padding: 2px 0;
+            }
+
+            .date {
+                color: #666666;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                min-width: 110px;
+            }
+            .alltags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                list-style: none;
+                padding: 0;
+                margin: 10px 0;
+            }
+            .alltags a {
+                display: inline-block;
+                text-decoration: none;
+                padding: 4px;
+                /*border: 1px solid #ccc;*/
+                background-color: #f0f0f0;
+                /*border-radius: 10px;*/
+                font-size: 14px;
+            }
+
+            @media (max-width: 640px) {
+                section {
+                    padding: 24px 20px;
+                }
+
+                .posts li {
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .date {
+                    min-width: auto;
+                    font-size: 0.8rem;
+                }
+
+                nav {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+
+                nav h2 {
+                    width: 100%;
+                    margin-bottom: 6px;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <section class="container wrap">
+            <header>
+                <div class="nav">
+                    <nav>
+                        <h2>Mukul Makwana</h2>
+                        <a href="/">Home</a>
+                        <a href="/blog/">Blog</a>
+
+                        <a href="/about">About</a>
+                    </nav>
+                </div>
+            </header>
+
+            <div class="main">
+                <main><article>
+  <h1>I Thought Redis Was Just a HashMap</h1>
+
+  <p>
+    <em>4 June 2026</em>
+  </p>
+
+  <div><p>when using an in-memory db like redis or memcached i used to think — isn't this just a global hash table with set/get/del operations? why don't people just use their language's built-in map, host it in the cloud, and call it a day?</p>
+<p>so i thought, let's actually explore the internals and attempt to build a bare-bones version from scratch. i chose golang because i was exploring golang and its concurrency model.</p>
+<h2>naive approach</h2>
+<p>started with go's native map with basic set/get/del over tcp. added goroutines per connection for concurrent requests. then the obvious problem — multiple goroutines reading and writing the same map. added a single mutex. works, but now every operation locks the entire table. not scalable if you want any real throughput.</p>
+<p>also heard about go's gc overhead on heap allocations, so wanted to avoid native map, so decided to implement a custom hash table.</p>
+<h2>hash table 101</h2>
+<p>the basic idea is, hash the key, get an integer, use it as an array index. same key always hashes to the same index so avg-case lookups are O(1). but two different keys can hash to the same index, so we use chaining to store multiple values at the same index. like you can create object/struct to store key/value pairs with next pointer to next struct/object in chain. so now same index can store multiple key/value pairs via chaining (linked list). for collision resolution,there are other techniques as well like open addressing etc.</p>
+<p>i went with a byte array approach instead. which will have two arrays:</p>
+<pre><code>bucket_array [index → offset]
+data_array   [keyLen | valLen | nextOffset | key | value | ...]
+
+</code></pre>
+<pre><code>bucket[42] -&gt; offset 128
+data_array: [5|5|256|hello|world]
+</code></pre>
+<p>in this structure, we hash the key, get the bucket index, bucket stores an offset of the data in the data array.  data array stores the actual key/value pairs with metadata. each entry stores the data with next offset to next entry in chain.</p>
+<h2>sharding</h2>
+<p>the whole hash table still shares a single lock , every operation locks the entire table. we can split the table into multiple arrays, each entry in the array will have its own bucket array and data array. this way, we can lock only the array index we are working on, not the entire table.</p>
+<pre><code class="language-go">type shard struct {
+    mu          sync.RWMutex
+    bucketArray []int
+    dataArray   []byte
+}
+
+type DB struct {
+    shards [NumShards]shard
+}
+
+func (db *DB) getShard(hash uint32) *shard {
+    return &amp;db.shards[hash%NumShards]
+}
+</code></pre>
+<p>each shard is pre-allocated with a fixed size at startup. when a shard fills up , a background worker (goroutine) handles growing via channel queue so the whole operation does not block.</p>
+<h2>delete and compaction</h2>
+<p>the structure is append only in data array. so delete wont remove specific entry from chain. so i mark deleted entries with a tombstone value like <code>valLen = 0</code>. on get tombstone entries are skipped.
+tombstone entries gonna accumulate and waste the memory space. added one compaction function which rebuilds the shard by skipping tombstone entries and this compaction is triggered when memory usage crosses a threshold. but it also locks the shard so it's a trade off.</p>
+<h2>conclusion</h2>
+<p>the single mutex was the biggest bottleneck — not the hash function or collision handling. sharding reduced contention more than anything else. benchmarked at ~78k ops/sec over tcp. built this purely for learning — but exploring memory management, concurrency, and go internals all at once was quite fun.</p>
+<h2>what's missing</h2>
+<ul>
+<li>no persistent storage, data is lost on restart</li>
+<li>no eviction policy, memory usage grows without bound</li>
+<li>no crash recovery</li>
+<li>compaction pauses the shard while rebuilding</li>
+<li>no replication</li>
+<li>edges case handling</li>
+</ul>
+<p>source code: <a href="https://github.com/mukul0x9/memdb">https://github.com/mukul0x9/memdb</a></p>
+<p>references:</p>
+<ul>
+<li><a href="https://github.com/allegro/bigcache">https://github.com/allegro/bigcache</a></li>
+<li><a href="https://github.com/coocood/freecache">https://github.com/coocood/freecache</a></li>
+<li><a href="https://www.youtube.com/watch?v=h30k7YixrMo">https://www.youtube.com/watch?v=h30k7YixrMo</a></li>
+</ul>
+</div>
+
+    <div class="tags">
+     
+    <a href="/tags/recreational-programming">#recreational-programming</a>
+    
+    <a href="/tags/db">#db</a>
+     
+  </div>
+</article>
+</main>
+            </div>
+        </section>
+    </body>
+</html>

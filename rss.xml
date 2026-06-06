@@ -5,6 +5,12 @@
 <link>https://mukul0x9.pages.dev</link>
 <description>Technical blog</description>
 <item>
+<title>I Thought Redis Was Just a HashMap</title>
+<link>https://mukul0x9.pages.dev/blog/memdb/</link>
+<guid>https://mukul0x9.pages.dev/blog/memdb/</guid>
+<pubDate>Thu, 04 Jun 2026 00:00:00 GMT</pubDate>
+</item>
+<item>
 <title>Building a Tiny SSG</title>
 <link>https://mukul0x9.pages.dev/blog/tiny-ssg/</link>
 <guid>https://mukul0x9.pages.dev/blog/tiny-ssg/</guid>
