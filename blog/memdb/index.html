@@ -179,7 +179,7 @@ func (db *DB) getShard(hash uint32) *shard {
 <p>the structure is append only in data array. so delete wont remove specific entry from chain. so i mark deleted entries with a tombstone value like <code>valLen = 0</code>. on get tombstone entries are skipped.
 tombstone entries gonna accumulate and waste the memory space. added one compaction function which rebuilds the shard by skipping tombstone entries and this compaction is triggered when memory usage crosses a threshold. but it also locks the shard so it's a trade off.</p>
 <h2>conclusion</h2>
-<p>the single mutex was the biggest bottleneck — not the hash function or collision handling. sharding reduced contention more than anything else. benchmarked at ~78k ops/sec over tcp. built this purely for learning — but exploring memory management, concurrency, and go internals all at once was quite fun.</p>
+<p>the single mutex was the biggest bottleneck — not the hash function or collision handling. sharding reduced contention more than anything else. built this purely for learning — but exploring memory management, concurrency, and go internals all at once was quite fun.</p>
 <h2>what's missing</h2>
 <ul>
 <li>no persistent storage, data is lost on restart</li>
