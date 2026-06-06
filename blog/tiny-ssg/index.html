@@ -150,8 +150,8 @@ so i thought let's build a tiny static site generator to build a mental model of
 <li>a markdown parser to convert markdown files to html</li>
 </ul>
 <h1>template engine</h1>
-<p>the naive assumption is that a template engine just does string replacement like find {{ user_name }} and replaces it with the actual value from the context. but what about if statements and loops? you cant do regex for control flow.
-the actual insight from the article was one way to make a template engine work is to compile the template string to a python function then execute it with the context.</p>
+<p>i initially assumed that template engines just did string replacement with regex like <code>{{ user_name }}</code> gets replaced with the actual value from the context. but there are loops and if statements as well.
+the article's approach was to compile the template string to a python function then execute it with the context.</p>
 <p>this is a template</p>
 <pre><code class="language-python">&lt;p&gt;Welcome, {{user_name}}!&lt;/p&gt;
 &lt;p&gt;Products:&lt;/p&gt;
@@ -184,28 +184,34 @@ the actual insight from the article was one way to make a template engine work i
 render_func = safe_namespace[&quot;render_template&quot;]
 render_func(context)
 </code></pre>
-<p>the pipeline is: <code> template string → generate that function as a code string → exec() it into existence → call it with your context data.</code></p>
-<h1>markdown parser</h1>
-<pre><code>raw markdown
-→ block_tokenizer() → [ HEADING, TEXT_LINE, LIST_ITEM, ...]
-→ block_parser() → [ Heading{}, Paragraph{}, List{}, ...]
-→ attach_inline() → inline parse each node's raw_text
-→ render_all() → html string
-</code></pre>
-<p><strong>1. block tokenizer</strong> — splits raw text line by line and classifies each line into a token type: <code>HEADING</code>, <code>LIST_ITEM</code>, <code>TEXT_LINE</code>, or <code>BLANK</code>.</p>
-<p><strong>2. block parser</strong> — walks the token list and builds an AST of block-level nodes
-like <code>Heading</code>, <code>Paragraph</code>, and <code>List</code>. the only stateful part here is list
-handling — consecutive <code>LIST_ITEM</code> tokens need to be grouped under a single <code>List</code> node, so there's a <code>current_list</code> buffer that gets flushed whenever a non-list token appears.</p>
-<p><strong>3. inline parser</strong> — runs on the <code>raw_text</code> of each block node and handles
-<code>**bold**</code>, <code>*italic*</code>, <code>`code`</code>, <code>[links](url)</code>, and <code>![images](src)</code>. this
-one uses a small stack to handle nesting — when you hit <code>**</code> you push a new <code>Bold</code>
-node onto the stack, collect children until you hit the closing <code>**</code>, then pop it
-and attach it to the parent.</p>
-<p>after writing it i realized there are lots of edge cases to handle, so i moved to an established markdown parser for the actual blog.</p>
+<p>for markdown parser , i initially tried implmenting markdown parser from scratch using block parsing, building an AST and then i fried my brain (skill issue). switched to an existing library. code is in <code>markdown.py</code>.</p>
 <p>so i started with a simple Python script that reads markdown files and parse them to html then renders them using a custom template engine.</p>
-<p>then added some ssg like thing which loops through directories and renders markdown files and create html files in the output directory in certain subdirectories so you can serve the static files over http.just like any other static site generator output.</p>
+<p>the python script reads markdown files from the <code>content</code> directory, pass raw text to the markdown parser which returns an raw html string, pass that to the template engine which returns the final html then writes each files to the <code>output</code> directory in the specified subdirectory so server or any other static file server can serve the files over http.</p>
+<p>content directory structure</p>
+<pre><code>content/
+├── about.md
+├── blog
+│   ├── hello-world.md
+│   └── tiny-toy-ssg.md
+├── index.md
+└── reading_list.md
+</code></pre>
+<p>output directory structure.
+each markdown file will have their own directory with index.html of the rendered content. so the server can serve each directory as router.
+for example <code>http://localhost/about/</code> will serve the <code>about</code> directory and <code>http://localhost/blog/hello-world/</code> will serve the <code>hello-world</code> directory.</p>
+<pre><code>├── about
+│   └── index.html
+├── BingSiteAuth.xml
+├── blog
+│   ├── hello-world
+│   │   └── index.html
+│   ├── index.html
+│   └── tiny-ssg
+│       └── index.html
+</code></pre>
+<p>the final flow is straightforward, read markdown files from content/ directory , parse it to html , make context object , pass it to template engine , render final html and write it to output/ directory.</p>
 <p>there are plenty of gaps to fill and edge cases to handle but the goal was never completeness. it was to understand the problem and how under the hood it can work.</p>
-<p>source is at <a href="https://github.com/mukul0x9/baresg">mukul0x9/baresg</a></p>
+<p>source code : <a href="https://github.com/mukul0x9/baresg">mukul0x9/baresg</a></p>
 </div>
 
     <div class="tags">
