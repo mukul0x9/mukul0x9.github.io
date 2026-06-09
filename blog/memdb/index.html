@@ -183,11 +183,9 @@ tombstone entries gonna accumulate and waste the memory space. added one compact
 <h2>did it actually help?</h2>
 <p>benchmarked SET-only with 100 concurrent connections against a plain
 <code>sync.RWMutex</code> native map, monitored with <code>GODEBUG=gctrace=1</code>.</p>
-<p>| metric | native map | byte array arena |
-|---|---|---|
-| throughput (3 runs) | 96k–116k RPS | 88k–101k RPS |
-| max STW pause | ~1.5ms | ~6ms |
-| max concurrent mark | ~113ms | ~7.8ms |</p>
+<p>throughput (3 runs): native map 96k–116k RPS, custom hash table 88k–90k RPS.
+max STW pause: native map ~1.5ms, custom hash table ~6ms.
+max concurrent mark: native map ~113ms, custom hash table ~7.8ms.</p>
 <p>native map wins on throughput and STW pause.</p>
 <p>the one place custom hash table wins is concurrent mark duration 113ms(native map) vs 7.8ms. native map has more pointers for GC to trace than the custom hash table.</p>
 <h2>what's missing</h2>
