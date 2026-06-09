@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title></title>
+
+        <style>
+            :root {
+                --bg: #faf9f7;
+                --text: #222222;
+                --muted: #666666;
+                --border: #dddddd;
+                --link: #0066cc;
+            }
+
+            [data-theme="dark"] {
+                --bg: #0f1115;
+                --text: #e8e8e8;
+                --muted: #9aa0a6;
+                --border: #2a2f36;
+                --link: lightskyblue;
+            }
+
+            body {
+                margin: 40px auto;
+                max-width: 750px;
+                padding: 0 16px;
+                font:
+                    19px/1.7 Georgia,
+                    serif;
+                color: var(--text);
+                background: var(--bg);
+            }
+
+            /* header */
+            header {
+                margin-bottom: 3rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+            }
+
+            header a {
+                text-decoration: none;
+                color: inherit;
+            }
+
+            nav {
+                font-size: 1.3rem;
+                color: var(--muted);
+            }
+
+            nav a {
+                margin-right: 12px;
+            }
+
+            nav a:hover {
+                border-color: var(--border);
+                color: var(--link);
+            }
+
+            /* toggle button */
+            .toggle {
+                cursor: pointer;
+                font-size: 0.9rem;
+                color: var(--muted);
+                border: none;
+                background: none;
+            }
+
+            /* content */
+            h1,
+            h2,
+            h3 {
+                line-height: 1.3;
+                margin: 2rem 0 1rem;
+            }
+
+            p {
+                margin: 1rem 0;
+            }
+
+            a {
+                color: var(--link);
+                text-decoration: underline;
+            }
+
+            blockquote {
+                margin: 1.5rem 0;
+                padding-left: 1rem;
+                border-left: 2px solid var(--border);
+                color: var(--muted);
+                font-style: italic;
+            }
+
+            img {
+                max-width: 100%;
+                display: block;
+                margin: 1.5rem 0;
+            }
+
+            /* posts list */
+            .posts {
+                list-style: none;
+                padding: 0;
+            }
+
+            .posts li {
+                display: flex;
+                align-items: baseline;
+                gap: 12px;
+                margin: 0.5rem 0;
+                padding: 2px 0;
+            }
+
+            .date {
+                color: var(--muted);
+                font-size: 0.9rem;
+                white-space: nowrap;
+                min-width: 110px; /* keeps dates aligned vertically */
+            }
+
+            .posts a {
+                text-decoration: none;
+            }
+            .toggle {
+                background-color: var(--bg);
+                color: var(--fg);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+
+            .alltags {
+                display: flex;
+                flex-wrap: wrap; /* allows multiple rows if needed */
+                gap: 8px; /* space between tags */
+                list-style: none; /* remove bullets */
+                padding: 0;
+                margin: 10px 0;
+            }
+
+            .alltags li {
+                margin: 0;
+            }
+
+            .alltags a {
+                display: inline-block; /* makes padding behave properly */
+                text-decoration: none;
+                padding: 4px 10px;
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                font-size: 14px;
+            }
+            @media (max-width: 600px) {
+                body {
+                    margin: 20px auto;
+                    font-size: 16px;
+                }
+
+                /* HEADER STACK */
+                header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 10px;
+                }
+
+                nav {
+                    font-size: 1rem;
+                }
+
+                nav a {
+                    margin-right: 8px;
+                }
+
+                /* POSTS STACK */
+                .posts li {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 2px;
+                }
+
+                .date {
+                    min-width: unset;
+                    font-size: 0.85rem;
+                }
+
+                /* TAGS tighter */
+                .alltags {
+                    gap: 6px;
+                }
+
+                .alltags a {
+                    font-size: 12px;
+                    padding: 3px 8px;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <div>
+                <a href="/"><strong>Mukul Makwana</strong></a>
+                <nav>
+                    <a href="/">Home</a>
+                    <a href="/blog/">Blog</a>
+                    <!--<a href="/about-me">About</a>-->
+                </nav>
+            </div>
+            <button class="toggle" onclick="toggleTheme()">dark</button>
+        </header>
+
+        <main><article>
+  <h1></h1>
+
+  <p>
+    <em>15 April 2026</em>
+  </p>
+
+  <div><h2><strong><em>Projects / recreational programming</em></strong></h2>
+<ul>
+  <li><a href="https://github.com/mukul0x9/memdb">memdb</a> - In-memory key-value store in Go built without Go maps, using a custom arena allocator, Exposes a TCP server for GET/SET/DEL operations.</li>
+</ul>
+<ul>
+  <li><a href="https://github.com/mukul0x9/baresg">baresg</a> — a small static site generator with a custom template engine and markdown parser,This site is managed by this custom static site generator.</li>
+</ul>
+<h2>Work Experience</h2>
+<ul>
+  <li>Digiqt Technolab, Ahmedabad — Software Developer(Aug 2021 – Mar 2026 )</li>
+</ul>
+<h2>Contact</h2>
+<ul>
+  <li>Email: mukulmakwana09@gmail.com</li>
+  <li>GitHub: https://github.com/mukul0x9</li>
+</ul>
+</div>
+
+    <div class="tags">
+    
+  </div>
+</article>
+</main>
+
+        <script>
+            function setTheme(theme) {
+                document.documentElement.setAttribute("data-theme", theme);
+                localStorage.setItem("theme", theme);
+
+                const btn = document.querySelector(".toggle");
+                btn.textContent = theme === "dark" ? "light" : "dark";
+            }
+
+            function toggleTheme() {
+                const current =
+                    document.documentElement.getAttribute("data-theme") ||
+                    "light";
+                const next = current === "dark" ? "light" : "dark";
+                setTheme(next);
+            }
+
+            // load saved theme
+            (function () {
+                const saved = localStorage.getItem("theme") || "light";
+                setTheme(saved);
+            })();
+        </script>
+    </body>
+</html>
