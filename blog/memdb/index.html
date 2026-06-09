@@ -145,8 +145,8 @@
   <div><p>when using an in-memory db like redis or memcached i used to think — isn't this just a global hash table with set/get/del operations? why don't people just use their language's built-in map, host it in the cloud, and call it a day?</p>
 <p>so i thought, let's actually explore the internals and attempt to build a bare-bones version from scratch. i chose golang because i was exploring golang and its concurrency model.</p>
 <h2>naive approach</h2>
-<p>started with go's native map with basic set/get/del over tcp. added goroutines per connection for concurrent requests. then the obvious problem — multiple goroutines reading and writing the same map. added a single mutex. works, but now every operation locks the entire table. not scalable if you want any real throughput.</p>
-<p>also heard about go's gc overhead on heap allocations, so wanted to avoid native map, so decided to implement a custom hash table.</p>
+<p>started with go's native map with basic set/get/del over tcp. added goroutines per connection for concurrent requests. then the obvious problem — multiple goroutines reading and writing the same map. added a single mutex. works, but now every operation locks the entire table.</p>
+<p>also wanted to understand go's gc behavior on heap-heavy structures, so decided to implement a custom hash table and measure the difference.</p>
 <h2>hash table 101</h2>
 <p>the basic idea is, hash the key, get an integer, use it as an array index. same key always hashes to the same index so avg-case lookups are O(1). but two different keys can hash to the same index, so we use chaining to store multiple values at the same index. like you can create object/struct to store key/value pairs with next pointer to next struct/object in chain. so now same index can store multiple key/value pairs via chaining (linked list). for collision resolution,there are other techniques as well like open addressing etc.</p>
 <p>i went with a byte array approach instead. which will have two arrays:</p>
@@ -180,6 +180,16 @@ func (db *DB) getShard(hash uint32) *shard {
 tombstone entries gonna accumulate and waste the memory space. added one compaction function which rebuilds the shard by skipping tombstone entries and this compaction is triggered when memory usage crosses a threshold. but it also locks the shard so it's a trade off.</p>
 <h2>conclusion</h2>
 <p>the single mutex was the biggest bottleneck — not the hash function or collision handling. sharding reduced contention more than anything else. built this purely for learning — but exploring memory management, concurrency, and go internals all at once was quite fun.</p>
+<h2>did it actually help?</h2>
+<p>benchmarked SET-only with 100 concurrent connections against a plain
+<code>sync.RWMutex</code> native map, monitored with <code>GODEBUG=gctrace=1</code>.</p>
+<p>| metric | native map | byte array arena |
+|---|---|---|
+| throughput (3 runs) | 96k–116k RPS | 88k–101k RPS |
+| max STW pause | ~1.5ms | ~6ms |
+| max concurrent mark | ~113ms | ~7.8ms |</p>
+<p>native map wins on throughput and STW pause.</p>
+<p>the one place custom hash table wins is concurrent mark duration 113ms(native map) vs 7.8ms. native map has more pointers for GC to trace than the custom hash table.</p>
 <h2>what's missing</h2>
 <ul>
 <li>no persistent storage, data is lost on restart</li>
