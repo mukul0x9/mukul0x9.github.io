@@ -37,7 +37,7 @@
         .page {
             max-width: 860px;
             margin: auto;
-            background: #faf8f5;
+            background: #ffffff;
             border: 2px solid #2b2927;
             padding: 2.5rem;
             min-height: calc(100vh - 4rem);
@@ -270,7 +270,7 @@ func (db *DB) getShard(hash uint32) *shard {
 <p>the structure is append only in data array. so delete wont remove specific entry from chain. so i mark deleted entries with a tombstone value like <code>valLen = 0</code>. on get tombstone entries are skipped.
 tombstone entries gonna accumulate and waste the memory space. added one compaction function which rebuilds the shard by skipping tombstone entries and this compaction is triggered when memory usage crosses a threshold. but it also locks the shard so it's a trade off.</p>
 <h2>conclusion</h2>
-<p>the single mutex was the biggest bottleneck — not the hash function or collision handling. sharding reduced contention more than anything else. built this purely for learning — but exploring memory management, concurrency, and go internals all at once was quite fun.</p>
+<p>built this purely for learning — but exploring memory management, concurrency, and go internals all at once was quite fun.</p>
 <h2>did it actually help?</h2>
 <p>benchmarked SET-only with 100 concurrent connections against a plain
 <code>sync.RWMutex</code> native map, monitored with <code>GODEBUG=gctrace=1</code>.</p>
@@ -278,7 +278,7 @@ tombstone entries gonna accumulate and waste the memory space. added one compact
 max STW pause: native map ~1.5ms, custom hash table ~6ms.
 max concurrent mark: native map ~113ms, custom hash table ~7.8ms.</p>
 <p>native map wins on throughput and STW pause.</p>
-<p>the one place custom hash table wins is concurrent mark duration 113ms(native map) vs 7.8ms. native map has more pointers for GC to trace than the custom hash table.</p>
+<p>concurrent mark duration 113ms(native map) vs 7.8ms.</p>
 <h2>what's missing</h2>
 <ul>
 <li>no persistent storage, data is lost on restart</li>
