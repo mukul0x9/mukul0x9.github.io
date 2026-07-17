@@ -2,11 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://mukul0x9.pages.dev/</loc>
-<lastmod>2026-07-02</lastmod>
-</url>
-<url>
-<loc>https://mukul0x9.pages.dev/blog/</loc>
-<lastmod>2026-07-02</lastmod>
+<lastmod>2026-07-17</lastmod>
 </url>
 <url>
 <loc>https://mukul0x9.pages.dev/blog/memdb/</loc>
@@ -23,5 +19,17 @@
 <url>
 <loc>https://mukul0x9.pages.dev/reading-list/</loc>
 <lastmod>2026-04-15</lastmod>
+</url>
+<url>
+<loc>https://mukul0x9.pages.dev/tags/Hello/</loc>
+<lastmod>2026-07-17</lastmod>
+</url>
+<url>
+<loc>https://mukul0x9.pages.dev/tags/recreational-programming/</loc>
+<lastmod>2026-07-17</lastmod>
+</url>
+<url>
+<loc>https://mukul0x9.pages.dev/tags/db/</loc>
+<lastmod>2026-07-17</lastmod>
 </url>
 </urlset>
